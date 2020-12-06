@@ -20,6 +20,8 @@ public class NetClient extends Application {
     private Stage authStage;
     private Network network;
     private Controller controller;
+    private Thread t1;
+    private boolean isActiveThread;
 
     @Override
     public void start(Stage primaryStage) throws Exception{
@@ -35,6 +37,8 @@ public class NetClient extends Application {
         Scene scene = new Scene(page);
         authStage.setScene(scene);
         authStage.show();
+
+        checkTimeout();
 
         FXMLLoader loader = new FXMLLoader();
         loader.setLocation(NetClient.class.getResource("views/sample.fxml"));
@@ -55,6 +59,24 @@ public class NetClient extends Application {
 
     }
 
+    // TODO Добавить отключение неавторизованных пользователей по таймауту (120 сек. ждём после подключения клиента, и если он не авторизовался за это время, закрываем соединение).
+    private void checkTimeout(){
+        t1 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(120 * 1000);
+                    if (!isActiveThread){
+                        System.exit(-1);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        t1.start();
+    }
+
     public static void showErrorMessage(String message, String error){
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Connection problem");
@@ -64,6 +86,7 @@ public class NetClient extends Application {
     }
 
     public void openChat(){
+        isActiveThread = true;
         authStage.close();
         primaryStage.show();
         primaryStage.setTitle(network.getUserName());
